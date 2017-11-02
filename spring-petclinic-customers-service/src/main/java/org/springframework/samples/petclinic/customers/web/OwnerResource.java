@@ -65,8 +65,14 @@ class OwnerResource {
      */
     @GetMapping
     public List<Owner> findAll() {
+        //TODO: 50 second delay for demo purposes only (tzwickl)
+        try {
+            Thread.sleep(50);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return ownerRepository.findAll();
-    }
+	}
 
     /**
      * Update Owner
