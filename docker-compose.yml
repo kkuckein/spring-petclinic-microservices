@@ -1,21 +1,14 @@
 version: '2'
 services:
-  cmr:
-    image: inspectit/cmr:1.8.3.97
-    ports:
-    - "8182:8182"
-
   config-server:
-    image: mszarlinski/spring-petclinic-config-server
+    image: openapm/spring-petclinic-config-server
     container_name: config-server
-    depends_on:
-      - cmr
-    entrypoint: ["./wait-for-it.sh","cmr:9070","--timeout=60","--","java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+    entrypoint: ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
     ports:
      - 8888:8888
 
   discovery-server:
-    image: mszarlinski/spring-petclinic-discovery-server
+    image: openapm/spring-petclinic-discovery-server
     container_name: discovery-server
     links:
      - config-server
@@ -26,49 +19,49 @@ services:
      - 8761:8761
 
   customers-service:
-    image: mszarlinski/spring-petclinic-customers-service
+    image: openapm/spring-petclinic-customers-service
     container_name: customers-service
     links:
      - config-server
      - discovery-server
-     - cmr  
     depends_on:
      - config-server
      - discovery-server
-    entrypoint: ["./wait-for-it.sh","discovery-server:8761","--timeout=60","--","java","-javaagent:/agent/inspectit-agent.jar","-Dinspectit.repository=cmr:9070","-Dinspectit.agent.name=customers-service","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+    entrypoint: ["./wait-for-it.sh","discovery-server:8761","--timeout=60","--","java","-DpromPort=9092","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
     ports:
     - 8081:8081
+    - 9092:9092
 
   visits-service:
-    image: mszarlinski/spring-petclinic-visits-service
+    image: openapm/spring-petclinic-visits-service
     container_name: visits-service
     links:
      - config-server
      - discovery-server
-     - cmr
     depends_on:
      - config-server
      - discovery-server
-    entrypoint: ["./wait-for-it.sh","discovery-server:8761","--timeout=60","--","java","-javaagent:/agent/inspectit-agent.jar","-Dinspectit.repository=cmr:9070","-Dinspectit.agent.name=visits-service","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+    entrypoint: ["./wait-for-it.sh","discovery-server:8761","--timeout=60","--","java","-DpromPort=9094","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
     ports:
      - 8082:8082
+     - 9094:9094
 
   vets-service:
-    image: mszarlinski/spring-petclinic-vets-service
+    image: openapm/spring-petclinic-vets-service
     container_name: vets-service
     links:
      - config-server
      - discovery-server
-     - cmr
     depends_on:
      - config-server
      - discovery-server
-    entrypoint: ["./wait-for-it.sh","discovery-server:8761","--timeout=60","--","java","-javaagent:/agent/inspectit-agent.jar","-Dinspectit.repository=cmr:9070","-Dinspectit.agent.name=vets-service","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+    entrypoint: ["./wait-for-it.sh","discovery-server:8761","--timeout=60","--","java","-DpromPort=9093","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
     ports:
      - 8083:8083
+     - 9093:9093
 
   api-gateway:
-    image: mszarlinski/spring-petclinic-api-gateway
+    image: openapm/spring-petclinic-api-gateway
     container_name: api-gateway
     links:
      - config-server
@@ -76,24 +69,21 @@ services:
      - customers-service
      - visits-service
      - vets-service
-     - cmr
     depends_on:
      - config-server
      - discovery-server
-    entrypoint: ["./wait-for-it.sh","discovery-server:8761","--timeout=60","--","java","-javaagent:/agent/inspectit-agent.jar","-Dinspectit.repository=cmr:9070","-Dinspectit.agent.name=api-gateway","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+    entrypoint: ["./wait-for-it.sh","discovery-server:8761","--timeout=60","--","java","-DpromPort=9091","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
     ports:
      - 8080:8080
+     - 9091:9091
 
-  admin-server:
-    image: mszarlinski/spring-petclinic-admin-server
-    container_name: admin-server
+  prometheus:
+    image: openapm/spring-petclinic-prometheus
+    container_name: prometheus
     links:
-     - config-server
-     - discovery-server
-     - cmr
-    depends_on:
-     - config-server
-     - discovery-server
-    entrypoint: ["./wait-for-it.sh","discovery-server:8761","--timeout=60","--","java","-javaagent:/agent/inspectit-agent.jar","-Dinspectit.repository=cmr:9070","-Dinspectit.agent.name=admin-server","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+     - api-gateway
+     - customers-service
+     - visits-service
+     - vets-service
     ports:
      - 9090:9090

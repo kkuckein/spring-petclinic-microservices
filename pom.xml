@@ -15,6 +15,7 @@
 	<packaging>pom</packaging>
 
 	<modules>
+        <module>spring-petclinic-opencensus</module>
 		<module>spring-petclinic-admin-server</module>
 		<module>spring-petclinic-customers-service</module>
 		<module>spring-petclinic-vets-service</module>
@@ -22,7 +23,6 @@
 		<module>spring-petclinic-config-server</module>
         <module>spring-petclinic-discovery-server</module>
         <module>spring-petclinic-api-gateway</module>
-        <module>spring-petclinic-monitoring</module>
     </modules>
 
     <properties>
@@ -30,8 +30,9 @@
         <spring-cloud.version>Camden.SR6</spring-cloud.version>
         <java.version>1.8</java.version>
 
-		<docker.image.prefix>mszarlinski</docker.image.prefix>
+		<docker.image.prefix>openapm</docker.image.prefix>
 		<docker.plugin.version>0.4.13</docker.plugin.version>
+        <opencensus.version>0.16.1</opencensus.version>
     </properties>
 
 	<dependencyManagement>
@@ -47,6 +48,11 @@
             <dependency>
                 <groupId>org.springframework.samples.petclinic.monitoring</groupId>
                 <artifactId>spring-petclinic-monitoring</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>spring-petclinic-opencensus</artifactId>
+                <groupId>org.springframework.samples.petclinic.opencensus</groupId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

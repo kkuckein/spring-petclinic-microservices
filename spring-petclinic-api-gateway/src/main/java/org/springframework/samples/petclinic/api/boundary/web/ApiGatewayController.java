@@ -15,8 +15,12 @@
  */
 package org.springframework.samples.petclinic.api.boundary.web;
 
+import io.opencensus.common.Scope;
+import io.opencensus.tags.TagKey;
+import io.opencensus.tags.TagValue;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.samples.petclinic.opencensus.OpenCensusService;
 import org.springframework.samples.petclinic.api.application.CustomersServiceClient;
 import org.springframework.samples.petclinic.api.application.OwnerDetails;
 import org.springframework.samples.petclinic.api.application.VisitDetails;
@@ -44,9 +48,12 @@ public class ApiGatewayController {
 
     @GetMapping(value = "owners/{ownerId}")
     public OwnerDetails getOwnerDetails(final @PathVariable int ownerId) {
-        final OwnerDetails owner = customersServiceClient.getOwner(ownerId);
-        supplyVisits(owner, visitsServiceClient.getVisitsForPets(owner.getPetIds(), ownerId));
-        return owner;
+
+        try(Scope s = OpenCensusService.getInstance().getTagger().currentBuilder().put(OpenCensusService.KEY_BT, TagValue.create("ownerDetail")).buildScoped()) {
+            final OwnerDetails owner = customersServiceClient.getOwner(ownerId);
+            supplyVisits(owner, visitsServiceClient.getVisitsForPets(owner.getPetIds(), ownerId));
+            return owner;
+        }
     }
 
     private void supplyVisits(final OwnerDetails owner, final Map<Integer, List<VisitDetails>> visitsMapping) {

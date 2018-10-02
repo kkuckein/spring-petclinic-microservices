@@ -6,9 +6,6 @@ ARG ARTIFACT_NAME
 ADD ${ARTIFACT_NAME}.jar /app.jar
 ENV SPRING_PROFILES_ACTIVE docker
 RUN bash -c 'touch /app.jar'
-ENV INSPECTIT_VERSION 1.8.3.97
-RUN wget --no-check-certificate https://github.com/inspectIT/inspectIT/releases/download/${INSPECTIT_VERSION}/inspectit-agent-java6-${INSPECTIT_VERSION}.zip \
-&& unzip inspectit-agent-java6-${INSPECTIT_VERSION}.zip \
-&& rm -f inspectit-agent-java6-${INSPECTIT_VERSION}.zip
 EXPOSE 8081
-ENTRYPOINT ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+EXPOSE 9092
+ENTRYPOINT ["java","-DpromPort=9092","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]

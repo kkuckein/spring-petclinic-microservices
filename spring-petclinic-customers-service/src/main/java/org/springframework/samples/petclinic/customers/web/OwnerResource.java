@@ -15,6 +15,8 @@
  */
 package org.springframework.samples.petclinic.customers.web;
 
+import io.opencensus.tags.TagContext;
+import io.opencensus.trace.Span;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.samples.petclinic.customers.model.Owner;
 import org.springframework.samples.petclinic.customers.model.OwnerRepository;
 import org.springframework.samples.petclinic.monitoring.Monitored;
+import org.springframework.samples.petclinic.opencensus.OpenCensusService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;

@@ -64,6 +64,12 @@
 			<scope>runtime</scope>
 		</dependency>
 
+        <!-- OpenCensus -->
+        <dependency>
+            <artifactId>spring-petclinic-opencensus</artifactId>
+            <groupId>org.springframework.samples.petclinic.opencensus</groupId>
+        </dependency>
+
 	</dependencies>
 
     <profiles>

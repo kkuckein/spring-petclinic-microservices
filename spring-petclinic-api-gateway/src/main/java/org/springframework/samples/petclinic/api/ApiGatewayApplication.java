@@ -21,7 +21,16 @@ import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.cloud.netflix.zuul.EnableZuulProxy;
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.client.ClientHttpRequestInterceptor;
+import org.springframework.samples.petclinic.opencensus.OpenCensusService;
+import org.springframework.samples.petclinic.opencensus.TracingInterceptor;
+import org.springframework.util.CollectionUtils;
 import org.springframework.web.client.RestTemplate;
+
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Maciej Szarlinski
@@ -31,13 +40,8 @@ import org.springframework.web.client.RestTemplate;
 @SpringBootApplication
 public class ApiGatewayApplication {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws UnknownHostException {
+        OpenCensusService.getInstance().registerContext("PetClinic", "api-gateway", InetAddress.getLocalHost().getHostName());
         SpringApplication.run(ApiGatewayApplication.class, args);
-    }
-
-    @Bean
-    @LoadBalanced
-    RestTemplate loadBalancedRestTemplate() {
-        return new RestTemplate();
     }
 }
