@@ -18,12 +18,8 @@ public class TracingIncomingInterceptor  extends HandlerInterceptorAdapter {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        Scope tracingScope = OpenCensusService.getInstance().createSpanFromIncomingRequest(request);
-
-        if(tracingScope == null){
-            tracingScope = OpenCensusService.getInstance().getTracer().spanBuilder(request.getMethod()).startScopedSpan();
-        }
         Scope tagContextScope = OpenCensusService.getInstance().createTagContextFromIncomingRequest(request);
+        Scope tracingScope = OpenCensusService.getInstance().createSpanFromIncomingRequest(request);
 
         Triple<Scope,Long,Scope> scopeTriple = Triple.of(tagContextScope,System.currentTimeMillis(), tracingScope);
         Deque<Triple<Scope,Long,Scope>> stack = getScopeStack(request);
@@ -39,8 +35,11 @@ public class TracingIncomingInterceptor  extends HandlerInterceptorAdapter {
             Triple<Scope,Long,Scope> scopeTriple = stack.pop();
             long duration = System.currentTimeMillis() - scopeTriple.getMiddle();
             OpenCensusService.getInstance().writeMetric(new Double(duration));
-            scopeTriple.getLeft().close();
-            scopeTriple.getRight().close();
+            Scope tagContextScope = scopeTriple.getLeft();
+            Scope tracingScope = scopeTriple.getRight();
+
+            tracingScope.close();
+            tagContextScope.close();
         }
     }
 

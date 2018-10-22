@@ -56,6 +56,12 @@
             <artifactId>simpleclient_httpserver</artifactId>
             <version>0.4.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>io.opencensus</groupId>
+            <artifactId>opencensus-exporter-trace-jaeger</artifactId>
+            <version>${opencensus.version}</version>
+        </dependency>
     </dependencies>
 
     <profiles>
@@ -81,6 +87,9 @@
                             <buildArgs>
                                 <ARTIFACT_NAME>${project.build.finalName}</ARTIFACT_NAME>
                             </buildArgs>
+                            <imageTags>
+                                <imageTag>opencensus-showcase</imageTag>
+                            </imageTags>
                         </configuration>
                     </plugin>
                 </plugins>

@@ -8,4 +8,5 @@ ENV SPRING_PROFILES_ACTIVE docker
 RUN bash -c 'touch /app.jar'
 EXPOSE 8080
 EXPOSE 9091
+EXPOSE 5006
 ENTRYPOINT ["java","-DpromPort=9091","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]

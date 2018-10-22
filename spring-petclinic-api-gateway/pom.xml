@@ -167,6 +167,9 @@
                             <buildArgs>
                                 <ARTIFACT_NAME>${project.build.finalName}</ARTIFACT_NAME>
                             </buildArgs>
+                            <imageTags>
+                                <imageTag>opencensus-showcase</imageTag>
+                            </imageTags>
                         </configuration>
                     </plugin>
                 </plugins>

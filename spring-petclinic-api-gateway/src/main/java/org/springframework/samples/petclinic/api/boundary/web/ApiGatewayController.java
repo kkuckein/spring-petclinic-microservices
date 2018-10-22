@@ -48,12 +48,9 @@ public class ApiGatewayController {
 
     @GetMapping(value = "owners/{ownerId}")
     public OwnerDetails getOwnerDetails(final @PathVariable int ownerId) {
-
-        try(Scope s = OpenCensusService.getInstance().getTagger().currentBuilder().put(OpenCensusService.KEY_BT, TagValue.create("ownerDetail")).buildScoped()) {
-            final OwnerDetails owner = customersServiceClient.getOwner(ownerId);
-            supplyVisits(owner, visitsServiceClient.getVisitsForPets(owner.getPetIds(), ownerId));
-            return owner;
-        }
+        final OwnerDetails owner = customersServiceClient.getOwner(ownerId);
+        supplyVisits(owner, visitsServiceClient.getVisitsForPets(owner.getPetIds(), ownerId));
+        return owner;
     }
 
     private void supplyVisits(final OwnerDetails owner, final Map<Integer, List<VisitDetails>> visitsMapping) {

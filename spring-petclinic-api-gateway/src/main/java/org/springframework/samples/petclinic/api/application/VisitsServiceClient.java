@@ -15,10 +15,12 @@
  */
 package org.springframework.samples.petclinic.api.application;
 
+import io.opencensus.common.Scope;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
+import org.springframework.samples.petclinic.opencensus.OpenCensusService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -37,12 +39,14 @@ public class VisitsServiceClient {
     private final RestTemplate loadBalancedRestTemplate;
 
     public Map<Integer, List<VisitDetails>> getVisitsForPets(final List<Integer> petIds, final int ownerId) {
-        //TODO:  expose batch interface in Visit Service
-        final ParameterizedTypeReference<List<VisitDetails>> responseType = new ParameterizedTypeReference<List<VisitDetails>>() {
-        };
-        return petIds.parallelStream()
-            .flatMap(petId -> loadBalancedRestTemplate.exchange("http://visits-service/owners/{ownerId}/pets/{petId}/visits", HttpMethod.GET, null,
-                responseType, ownerId, petId).getBody().stream())
-            .collect(groupingBy(VisitDetails::getPetId));
+        try(Scope ss = OpenCensusService.getInstance().getTracer().getSpanBuilder("VisitsServiceClient.getVisitsForPets").startScopedSpan()) {
+            //TODO:  expose batch interface in Visit Service
+            final ParameterizedTypeReference<List<VisitDetails>> responseType = new ParameterizedTypeReference<List<VisitDetails>>() {
+            };
+            return petIds.parallelStream()
+                .flatMap(petId -> loadBalancedRestTemplate.exchange("http://visits-service/owners/{ownerId}/pets/{petId}/visits", HttpMethod.GET, null,
+                    responseType, ownerId, petId).getBody().stream())
+                .collect(groupingBy(VisitDetails::getPetId));
+        }
     }
 }

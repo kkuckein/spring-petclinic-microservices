@@ -3,6 +3,7 @@ package org.springframework.samples.petclinic.opencensus;
 
 import io.opencensus.common.Scope;
 import io.opencensus.exporter.stats.prometheus.PrometheusStatsCollector;
+import io.opencensus.exporter.trace.jaeger.JaegerTraceExporter;
 import io.opencensus.implcore.tags.TagContextImpl;
 import io.opencensus.stats.*;
 import io.opencensus.tags.*;
@@ -10,7 +11,9 @@ import io.opencensus.trace.Span;
 import io.opencensus.trace.SpanContext;
 import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
+import io.opencensus.trace.config.TraceConfig;
 import io.opencensus.trace.propagation.TextFormat;
+import io.opencensus.trace.samplers.Samplers;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.HTTPServer;
 import org.springframework.http.HttpRequest;
@@ -36,7 +39,7 @@ public class OpenCensusService {
     private final TagContextTextSerializer tagContextSerializer = new TagContextTextSerializer();
 
     private final Tagger tagger = Tags.getTagger();
-    private final Tracer tracer = Tracing.getTracer();
+    private final TracerWrapper tracer = TracerWrapper.getInstance();
 
     private final TextFormat textFormat = Tracing.getPropagationComponent().getB3Format();
     public final TextFormat.Setter<HttpRequest> httpRequestSetter = new TextFormat.Setter<HttpRequest>() {
@@ -69,11 +72,6 @@ public class OpenCensusService {
     private String node = "_";
 
     private OpenCensusService() {
-        try {
-            setupOpenCensus();
-        }catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     private void registerAllViews() {
@@ -101,25 +99,39 @@ public class OpenCensusService {
 
     private void setupOpenCensus() throws IOException {
         registerAllViews();
+        // Setup Metrics exporter
         PrometheusStatsCollector.createAndRegister();
         String strPort = System.getProperty("promPort");
         int port = strPort== null? 9091:Integer.parseInt(strPort);
 
         HTTPServer server =
             new HTTPServer(port,true);
+
+
+        // Setup tracing exporter
+        TraceConfig traceConfig = Tracing.getTraceConfig();
+        traceConfig.updateActiveTraceParams(
+            traceConfig.getActiveTraceParams().toBuilder().setSampler(Samplers.alwaysSample()).build());
+        String jaegerService= System.getProperty("jaegerService");
+        JaegerTraceExporter.createAndRegister("http://"+jaegerService+"/api/traces", this.service);
     }
 
-    public void registerContext(String application, String service, String node){
-        this.application = application;
-        this.service = service;
-        this.node = node;
+    public void registerContext(String application, String service, String node) {
+        try {
+            this.application = application;
+            this.service = service;
+            this.node = node;
+            setupOpenCensus();
+        } catch (Exception e) {
+
+        }
     }
 
     public Tagger getTagger() {
         return tagger;
     }
 
-    public Tracer getTracer() {
+    public TracerWrapper getTracer() {
         return tracer;
     }
 
@@ -131,13 +143,12 @@ public class OpenCensusService {
     public Scope createSpanFromIncomingRequest(HttpServletRequest request){
         try {
             SpanContext spanContext = textFormat.extract(request, httpRequestGetter);
-            Span span = tracer.spanBuilderWithRemoteParent(request.getMethod(), spanContext).startSpan();
-            return tracer.withSpan(span);
+            return tracer.spanBuilderWithRemoteParent(request.getMethod(), spanContext).startScopedSpan();
         } catch(Exception e){
 
         }
 
-        return null;
+        return OpenCensusService.getInstance().getTracer().spanBuilder(request.getMethod()).startScopedSpan();
     }
 
     public Scope createTagContextFromIncomingRequest(HttpServletRequest request){
@@ -146,21 +157,53 @@ public class OpenCensusService {
         tagCtxBuilder.put(KEY_APPLICATION, TagValue.create(this.application))
             .put(KEY_SERVICE, TagValue.create(this.service))
             .put(KEY_NODE, TagValue.create(this.node));
-        if(remoteTagContext != null){
+        if(remoteTagContext != null && !remoteTagContext.getTags().isEmpty()){
             TagValue origApplication = remoteTagContext.getTags().getOrDefault(KEY_APPLICATION, TagValue.create("_"));
             TagValue origService = remoteTagContext.getTags().getOrDefault(KEY_SERVICE, TagValue.create("_"));
             TagValue origNode = remoteTagContext.getTags().getOrDefault(KEY_NODE, TagValue.create("_"));
             TagValue bt = remoteTagContext.getTags().getOrDefault(KEY_BT, TagValue.create("Unknown"));
             tagCtxBuilder.put(KEY_APPLICATION_ORIG, origApplication)
                 .put(KEY_SERVICE_ORIG, origService)
-                .put(KEY_NODE_ORIG, origNode);
-
-            if(bt != null){
-                tagCtxBuilder.put(KEY_BT, bt);
-            }
+                .put(KEY_NODE_ORIG, origNode)
+                .put(KEY_BT, bt);
+        }else {
+            TagValue bt = remoteTagContext.getTags().getOrDefault(KEY_BT, TagValue.create(detectBT(request)));
+            tagCtxBuilder.put(KEY_BT, bt);
         }
 
         return tagCtxBuilder.buildScoped();
+    }
+
+    public String detectBT(HttpServletRequest request){
+        String method = request.getMethod();
+        String url = request.getRequestURL().toString().substring(7);
+
+        int idxPath = url.indexOf('/');
+        if(idxPath>=0){
+            String path = url.substring(idxPath);
+            if(method.equalsIgnoreCase("GET") && this.service == "api-gateway" && path.startsWith("/owners/")){
+                return "Owner-Details";
+            }else if(method.equalsIgnoreCase("POST") && this.service == "customers-service" && path.startsWith("/owners")){
+                return "Create Owner";
+            }else if(method.equalsIgnoreCase("GET") && this.service == "customers-service" && path.matches("/owners/?")){
+                return "All Owners";
+            }else if(method.equalsIgnoreCase("GET") && this.service == "customers-service" && path.matches("/owners/.+")){
+                return "Get Owner";
+            }else if(method.equalsIgnoreCase("PUT") && this.service == "customers-service" && path.matches("/owners/.+")){
+                return "Update Owner";
+            }else if(method.equalsIgnoreCase("GET") && this.service == "customers-service" && path.startsWith("/petTypes")){
+                return "GetPetTypes";
+            }else if(method.equalsIgnoreCase("GET") && this.service == "visits-service" && path.matches("owners/.*/pets/.*/visits")){
+                return "Show Visits";
+            }else if(method.equalsIgnoreCase("GET") && this.service == "api-gateway" && path.startsWith("/index")){
+                return "Home";
+            }
+        }else{
+            return "Home";
+        }
+
+
+        return "Unknown";
     }
 
     public void writeMetric(double durationMs){

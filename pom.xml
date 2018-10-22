@@ -16,13 +16,14 @@
 
 	<modules>
         <module>spring-petclinic-opencensus</module>
-		<module>spring-petclinic-admin-server</module>
 		<module>spring-petclinic-customers-service</module>
 		<module>spring-petclinic-vets-service</module>
 		<module>spring-petclinic-visits-service</module>
 		<module>spring-petclinic-config-server</module>
         <module>spring-petclinic-discovery-server</module>
         <module>spring-petclinic-api-gateway</module>
+        <module>spring-petclinic-load</module>
+        <module>spring-petclinic-grafana</module>
     </modules>
 
     <properties>

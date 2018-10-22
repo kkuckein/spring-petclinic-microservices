@@ -1,14 +1,28 @@
 version: '2'
 services:
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    environment:
+     - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+    ports:
+     - 5775:5775/udp
+     - 6831:6831/udp
+     - 6832:6832/udp
+     - 5778:5778
+     - 16686:16686
+     - 14268:14268
+     - 9411:9411
+
   config-server:
-    image: openapm/spring-petclinic-config-server
+    image: openapm/spring-petclinic-config-server:opencensus-showcase
     container_name: config-server
     entrypoint: ["java","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
     ports:
      - 8888:8888
 
   discovery-server:
-    image: openapm/spring-petclinic-discovery-server
+    image: openapm/spring-petclinic-discovery-server:opencensus-showcase
     container_name: discovery-server
     links:
      - config-server
@@ -19,51 +33,55 @@ services:
      - 8761:8761
 
   customers-service:
-    image: openapm/spring-petclinic-customers-service
+    image: openapm/spring-petclinic-customers-service:opencensus-showcase
     container_name: customers-service
     links:
+     - jaeger
      - config-server
      - discovery-server
     depends_on:
      - config-server
      - discovery-server
-    entrypoint: ["./wait-for-it.sh","discovery-server:8761","--timeout=60","--","java","-DpromPort=9092","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+    entrypoint: ["./wait-for-it.sh","discovery-server:8761","--timeout=60","--","java","-DpromPort=9092","-DjaegerService=jaeger:14268","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
     ports:
     - 8081:8081
     - 9092:9092
 
   visits-service:
-    image: openapm/spring-petclinic-visits-service
+    image: openapm/spring-petclinic-visits-service:opencensus-showcase
     container_name: visits-service
     links:
+     - jaeger
      - config-server
      - discovery-server
     depends_on:
      - config-server
      - discovery-server
-    entrypoint: ["./wait-for-it.sh","discovery-server:8761","--timeout=60","--","java","-DpromPort=9094","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+    entrypoint: ["./wait-for-it.sh","discovery-server:8761","--timeout=60","--","java","-DpromPort=9094","-DjaegerService=jaeger:14268","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
     ports:
      - 8082:8082
      - 9094:9094
 
   vets-service:
-    image: openapm/spring-petclinic-vets-service
+    image: openapm/spring-petclinic-vets-service:opencensus-showcase
     container_name: vets-service
     links:
+     - jaeger
      - config-server
      - discovery-server
     depends_on:
      - config-server
      - discovery-server
-    entrypoint: ["./wait-for-it.sh","discovery-server:8761","--timeout=60","--","java","-DpromPort=9093","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+    entrypoint: ["./wait-for-it.sh","discovery-server:8761","--timeout=60","--","java","-DpromPort=9093","-DjaegerService=jaeger:14268","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
     ports:
      - 8083:8083
      - 9093:9093
 
   api-gateway:
-    image: openapm/spring-petclinic-api-gateway
+    image: openapm/spring-petclinic-api-gateway:opencensus-showcase
     container_name: api-gateway
     links:
+     - jaeger
      - config-server
      - discovery-server
      - customers-service
@@ -72,13 +90,13 @@ services:
     depends_on:
      - config-server
      - discovery-server
-    entrypoint: ["./wait-for-it.sh","discovery-server:8761","--timeout=60","--","java","-DpromPort=9091","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
+    entrypoint: ["./wait-for-it.sh","discovery-server:8761","--timeout=60","--","java","-DpromPort=9091","-DjaegerService=jaeger:14268","-Djava.security.egd=file:/dev/./urandom","-jar","/app.jar"]
     ports:
      - 8080:8080
      - 9091:9091
 
   prometheus:
-    image: openapm/spring-petclinic-prometheus
+    image: openapm/spring-petclinic-prometheus:opencensus-showcase
     container_name: prometheus
     links:
      - api-gateway
@@ -87,3 +105,29 @@ services:
      - vets-service
     ports:
      - 9090:9090
+
+  load:
+    image: openapm/spring-petclinic-load:opencensus-showcase
+    container_name: load
+    depends_on:
+     - api-gateway
+     - customers-service
+     - visits-service
+     - vets-service
+    links:
+     - api-gateway
+     - customers-service
+     - visits-service
+     - vets-service
+
+  grafana:
+    image: openapm/spring-petclinic-grafana:opencensus-showcase
+    container_name: grafana
+    depends_on:
+     - prometheus
+    links:
+     - prometheus
+    ports:
+     - 3002:3000
+    environment:
+     - GF_INSTALL_PLUGINS=https://github.com/openapm/grafana-flowmap/archive/master.zip;novatec-flowmap-panel
