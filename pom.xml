@@ -24,6 +24,9 @@
         <module>spring-petclinic-api-gateway</module>
         <module>spring-petclinic-load</module>
         <module>spring-petclinic-grafana</module>
+        <module>spring-petclinic-prometheus</module>
+        <module>spring-petclinic-telegraf</module>
+        <module>spring-petclinic-influx</module>
     </modules>
 
     <properties>

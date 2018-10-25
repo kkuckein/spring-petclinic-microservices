@@ -120,6 +120,24 @@ services:
      - visits-service
      - vets-service
 
+  influxdb:
+    image: openapm/spring-petclinic-influxdb:opencensus-showcase
+    container_name: influxdb
+    ports:
+     - 8086:8086
+
+  telegraf:
+    image: openapm/spring-petclinic-telegraf:opencensus-showcase
+    container_name: telegraf
+    depends_on:
+     - influxdb
+    links:
+     - influxdb
+     - api-gateway
+     - customers-service
+     - visits-service
+     - vets-service
+
   grafana:
     image: openapm/spring-petclinic-grafana:opencensus-showcase
     container_name: grafana
