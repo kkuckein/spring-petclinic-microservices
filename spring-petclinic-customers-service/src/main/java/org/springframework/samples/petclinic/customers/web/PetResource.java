@@ -16,6 +16,8 @@
 package org.springframework.samples.petclinic.customers.web;
 
 import lombok.RequiredArgsConstructor;
+import io.opencensus.common.Scope;
+import org.springframework.samples.petclinic.opencensus.OpenCensusService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,6 +26,7 @@ import org.springframework.samples.petclinic.monitoring.Monitored;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Juergen Hoeller
@@ -68,14 +71,29 @@ class PetResource {
 
     private void save(final Pet pet, final PetRequest petRequest) {
 
-        pet.setName(petRequest.getName());
-        pet.setBirthDate(petRequest.getBirthDate());
+        try(Scope ss = OpenCensusService.getInstance().getTracer().getSpanBuilder("PetResource.save").startScopedSpan()) {
 
-        petRepository.findPetTypeById(petRequest.getTypeId())
-            .ifPresent(pet::setType);
+            pet.setName(petRequest.getName());
+            pet.setBirthDate(petRequest.getBirthDate());
 
-        log.info("Saving pet {}", pet);
-        petRepository.save(pet);
+            // only do that is we have a "Snake" (type 4)
+            if (petRequest.getTypeId() == 4) {
+                try {
+                    TimeUnit.SECONDS.sleep(2);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            petRepository.findPetTypeById(petRequest.getTypeId())
+                .ifPresent(pet::setType);
+
+            log.info("Saving pet {}", pet);
+            petRepository.save(pet);
+            OpenCensusService.getInstance().getTracer().getCurrentSpan().addAnnotation("Saving PetId " + petRequest.getTypeId());
+        
+        }
+    
     }
 
     @GetMapping("owners/*/pets/{petId}")

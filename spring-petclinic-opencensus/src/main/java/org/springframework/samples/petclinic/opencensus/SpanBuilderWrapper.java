@@ -47,8 +47,7 @@ public class SpanBuilderWrapper extends SpanBuilder{
         for(Map.Entry<TagKey,TagValue> tag : tagContext.getTags().entrySet()){
             span.putAttribute(tag.getKey().getName(), AttributeValue.stringAttributeValue(tag.getValue().asString()));
         }
-        span.addAnnotation("Some Annotation");
-
+    
         return span;
     }
 

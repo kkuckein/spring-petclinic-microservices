@@ -15,12 +15,13 @@
  */
 package org.springframework.samples.petclinic.api.boundary.web;
 
-import io.opencensus.common.Scope;
-import io.opencensus.tags.TagKey;
-import io.opencensus.tags.TagValue;
-import lombok.RequiredArgsConstructor;
+import static java.util.Collections.emptyList;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.samples.petclinic.opencensus.OpenCensusService;
 import org.springframework.samples.petclinic.api.application.CustomersServiceClient;
 import org.springframework.samples.petclinic.api.application.OwnerDetails;
 import org.springframework.samples.petclinic.api.application.VisitDetails;
@@ -29,11 +30,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import static java.util.Collections.emptyList;
+import lombok.RequiredArgsConstructor;
 
 /**
  * @author Maciej Szarlinski

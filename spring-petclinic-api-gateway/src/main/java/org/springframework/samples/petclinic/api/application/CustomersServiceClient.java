@@ -33,7 +33,9 @@ public class CustomersServiceClient {
 
     public OwnerDetails getOwner(final int ownerId) {
         try(Scope ss = OpenCensusService.getInstance().getTracer().getSpanBuilder("CustomersServiceClient.getOwner").startScopedSpan()) {
-            return loadBalancedRestTemplate.getForObject("http://customers-service/owners/{ownerId}", OwnerDetails.class, ownerId);
+            OwnerDetails returnOwnerDetails = loadBalancedRestTemplate.getForObject("http://customers-service/owners/{ownerId}", OwnerDetails.class, ownerId);
+            OpenCensusService.getInstance().getTracer().getCurrentSpan().addAnnotation("Finished getOwner");
+            return returnOwnerDetails;
         }
     }
 }

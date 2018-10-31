@@ -1,32 +1,39 @@
 package org.springframework.samples.petclinic.opencensus;
 
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.springframework.http.HttpRequest;
+
 import io.opencensus.common.Scope;
 import io.opencensus.exporter.stats.prometheus.PrometheusStatsCollector;
 import io.opencensus.exporter.trace.jaeger.JaegerTraceExporter;
 import io.opencensus.implcore.tags.TagContextImpl;
-import io.opencensus.stats.*;
-import io.opencensus.tags.*;
-import io.opencensus.trace.Span;
+import io.opencensus.stats.Aggregation;
+import io.opencensus.stats.BucketBoundaries;
+import io.opencensus.stats.Measure;
+import io.opencensus.stats.Stats;
+import io.opencensus.stats.StatsRecorder;
+import io.opencensus.stats.View;
+import io.opencensus.tags.TagContextBuilder;
+import io.opencensus.tags.TagKey;
+import io.opencensus.tags.TagValue;
+import io.opencensus.tags.Tagger;
+import io.opencensus.tags.Tags;
 import io.opencensus.trace.SpanContext;
-import io.opencensus.trace.Tracer;
 import io.opencensus.trace.Tracing;
 import io.opencensus.trace.config.TraceConfig;
 import io.opencensus.trace.propagation.TextFormat;
 import io.opencensus.trace.samplers.Samplers;
-import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.exporter.HTTPServer;
-import org.springframework.http.HttpRequest;
+import lombok.extern.slf4j.Slf4j;
 
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
-
+@Slf4j
 public class OpenCensusService {
 
     /**
@@ -64,8 +71,6 @@ public class OpenCensusService {
     public static final TagKey KEY_APPLICATION_ORIG = TagKey.create("orig_application");
     public static final TagKey KEY_NODE_ORIG = TagKey.create("orig_node");
     public static final TagKey KEY_BT = TagKey.create("bt");
-
-    private Random rand = new Random(System.nanoTime());
 
     private String application = "_";
     private String service = "_";
@@ -107,7 +112,6 @@ public class OpenCensusService {
         HTTPServer server =
             new HTTPServer(port,true);
 
-
         // Setup tracing exporter
         TraceConfig traceConfig = Tracing.getTraceConfig();
         traceConfig.updateActiveTraceParams(
@@ -123,7 +127,7 @@ public class OpenCensusService {
             this.node = node;
             setupOpenCensus();
         } catch (Exception e) {
-
+            log.info("RegisterContext failed");
         }
     }
 
@@ -145,7 +149,7 @@ public class OpenCensusService {
             SpanContext spanContext = textFormat.extract(request, httpRequestGetter);
             return tracer.spanBuilderWithRemoteParent(request.getMethod(), spanContext).startScopedSpan();
         } catch(Exception e){
-
+            log.info("CreateSpanFromIncomingRequest failed");
         }
 
         return OpenCensusService.getInstance().getTracer().spanBuilder(request.getMethod()).startScopedSpan();
@@ -167,41 +171,45 @@ public class OpenCensusService {
                 .put(KEY_NODE_ORIG, origNode)
                 .put(KEY_BT, bt);
         }else {
-            TagValue bt = remoteTagContext.getTags().getOrDefault(KEY_BT, TagValue.create(detectBT(request)));
+            String businessTransactionName = detectBT(request);
+            TagValue bt = remoteTagContext.getTags().getOrDefault(KEY_BT, TagValue.create(businessTransactionName));
             tagCtxBuilder.put(KEY_BT, bt);
         }
 
         return tagCtxBuilder.buildScoped();
     }
 
-    public String detectBT(HttpServletRequest request){
+     public String detectBT(HttpServletRequest request){
         String method = request.getMethod();
         String url = request.getRequestURL().toString().substring(7);
-
+        
         int idxPath = url.indexOf('/');
         if(idxPath>=0){
             String path = url.substring(idxPath);
-            if(method.equalsIgnoreCase("GET") && this.service == "api-gateway" && path.startsWith("/owners/")){
+             if(method.equalsIgnoreCase("GET") && this.service == "api-gateway" && path.startsWith("/owners/")){
                 return "Owner-Details";
-            }else if(method.equalsIgnoreCase("POST") && this.service == "customers-service" && path.startsWith("/owners")){
-                return "Create Owner";
+            }else if(method.equalsIgnoreCase("POST") && this.service == "customers-service" && path.matches("/owners/.*/pets")){
+                return "Add Pet";
             }else if(method.equalsIgnoreCase("GET") && this.service == "customers-service" && path.matches("/owners/?")){
                 return "All Owners";
             }else if(method.equalsIgnoreCase("GET") && this.service == "customers-service" && path.matches("/owners/.+")){
                 return "Get Owner";
             }else if(method.equalsIgnoreCase("PUT") && this.service == "customers-service" && path.matches("/owners/.+")){
                 return "Update Owner";
+            }else if(method.equalsIgnoreCase("POST") && this.service == "customers-service" && path.startsWith("/owners")){
+                return "Create Owner";
             }else if(method.equalsIgnoreCase("GET") && this.service == "customers-service" && path.startsWith("/petTypes")){
                 return "GetPetTypes";
-            }else if(method.equalsIgnoreCase("GET") && this.service == "visits-service" && path.matches("owners/.*/pets/.*/visits")){
+            }else if(method.equalsIgnoreCase("GET") && this.service == "visits-service" && path.matches("/owners/.*/pets/.*/visits")){
                 return "Show Visits";
+            }else if(method.equalsIgnoreCase("POST") && this.service == "visits-service" && path.matches("/owners/.*/pets/.*/visits")) {
+                return "Add Visit";
             }else if(method.equalsIgnoreCase("GET") && this.service == "api-gateway" && path.startsWith("/index")){
                 return "Home";
             }
         }else{
             return "Home";
         }
-
 
         return "Unknown";
     }
@@ -219,8 +227,4 @@ public class OpenCensusService {
 
         return instance;
     }
-
-
-
-
 }

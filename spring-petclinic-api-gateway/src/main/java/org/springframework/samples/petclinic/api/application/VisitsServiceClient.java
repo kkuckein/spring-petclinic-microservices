@@ -43,10 +43,14 @@ public class VisitsServiceClient {
             //TODO:  expose batch interface in Visit Service
             final ParameterizedTypeReference<List<VisitDetails>> responseType = new ParameterizedTypeReference<List<VisitDetails>>() {
             };
-            return petIds.parallelStream()
+            
+            Map<Integer, List<VisitDetails>> returnVisits = petIds.stream()
                 .flatMap(petId -> loadBalancedRestTemplate.exchange("http://visits-service/owners/{ownerId}/pets/{petId}/visits", HttpMethod.GET, null,
                     responseType, ownerId, petId).getBody().stream())
                 .collect(groupingBy(VisitDetails::getPetId));
-        }
+            OpenCensusService.getInstance().getTracer().getCurrentSpan().addAnnotation("Finished getVisitsForPets");
+            return returnVisits;
+       }
     }
+
 }

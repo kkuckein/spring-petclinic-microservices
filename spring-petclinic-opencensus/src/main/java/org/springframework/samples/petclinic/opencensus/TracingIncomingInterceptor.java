@@ -1,18 +1,19 @@
 package org.springframework.samples.petclinic.opencensus;
 
-import org.apache.commons.lang3.tuple.Pair;
-import io.opencensus.common.Scope;
+import java.util.ArrayDeque;
+import java.util.Deque;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.lang3.tuple.Triple;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import io.opencensus.common.Scope;
 
 @Component
-public class TracingIncomingInterceptor  extends HandlerInterceptorAdapter {
+public class TracingIncomingInterceptor extends HandlerInterceptorAdapter {
 
     private final static String SCOPE_STACK = TracingIncomingInterceptor.class.getName() + ".scopeStack";
 

@@ -1,12 +1,17 @@
 package org.springframework.samples.petclinic.opencensus;
 
-import io.opencensus.implcore.tags.TagContextImpl;
-import io.opencensus.tags.*;
-import io.opencensus.tags.unsafe.ContextUtils;
-import org.springframework.http.HttpRequest;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.Map;
+
+import org.springframework.http.HttpRequest;
+
+import io.opencensus.implcore.tags.TagContextImpl;
+import io.opencensus.tags.TagContext;
+import io.opencensus.tags.TagContextBuilder;
+import io.opencensus.tags.TagKey;
+import io.opencensus.tags.TagValue;
+import io.opencensus.tags.Tagger;
 
 public class TagContextTextSerializer {
 
