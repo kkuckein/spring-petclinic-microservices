@@ -118,7 +118,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "alias": "",
+          "alias": "Threshold $tag_bt",
           "groupBy": [
             {
               "params": [
@@ -133,7 +133,7 @@
               "type": "fill"
             }
           ],
-          "hide": true,
+          "hide": false,
           "orderByTime": "ASC",
           "policy": "default",
           "query": "SELECT holt_winters_with_fit(mean(\"diff\"), 1, 1)*2 FROM \"bt_times\" WHERE $timeFilter GROUP BY bt, time(1m), \"bt\" fill(null)",
@@ -157,7 +157,7 @@
           "tags": []
         },
         {
-          "alias": "",
+          "alias": "Response Time $tag_bt",
           "groupBy": [
             {
               "params": [
@@ -172,11 +172,11 @@
               "type": "fill"
             }
           ],
-          "hide": true,
+          "hide": false,
           "measurement": "bt_times",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT mean(\"diff\") FROM \"bt_times\" WHERE (\"bt\" = 'Add Pet') AND $timeFilter GROUP BY time(1m), \"bt\" fill(null) ",
+          "query": "SELECT mean(\"diff\") FROM \"bt_times\" WHERE $timeFilter GROUP BY time(1m), \"bt\" fill(null) ",
           "rawQuery": true,
           "refId": "B",
           "resultFormat": "time_series",
@@ -221,7 +221,7 @@
           "hide": false,
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT mean(\"diff\")/holt_winters_with_fit(mean(\"diff\"), 1, 1) FROM \"bt_times\" WHERE (\"bt\" = 'Add Pet') AND $timeFilter GROUP BY bt, time(1m), \"bt\" fill(null)",
+          "query": "SELECT mean(\"diff\")/holt_winters_with_fit(mean(\"diff\"), 1, 1) FROM \"bt_times\" WHERE $timeFilter GROUP BY bt, time(1m), \"bt\" fill(null)",
           "rawQuery": true,
           "refId": "C",
           "resultFormat": "time_series",
@@ -336,5 +336,5 @@
   "timezone": "",
   "title": "Alerting",
   "uid": "5G3TSVamz",
-  "version": 4
+  "version": 1
 }
