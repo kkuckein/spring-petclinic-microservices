@@ -1,34 +1,4 @@
 {
-  "__inputs": [
-    {
-      "name": "DS_LOCALINFLUX",
-      "label": "LocalInflux",
-      "description": "",
-      "type": "datasource",
-      "pluginId": "influxdb",
-      "pluginName": "InfluxDB"
-    }
-  ],
-  "__requires": [
-    {
-      "type": "grafana",
-      "id": "grafana",
-      "name": "Grafana",
-      "version": "5.3.2"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": "5.0.0"
-    },
-    {
-      "type": "datasource",
-      "id": "influxdb",
-      "name": "InfluxDB",
-      "version": "5.0.0"
-    }
-  ],
   "annotations": {
     "list": [
       {
@@ -45,7 +15,7 @@
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "id": null,
+  "id": 3,
   "links": [],
   "panels": [
     {
@@ -79,14 +49,14 @@
         "frequency": "60s",
         "handler": 1,
         "name": "Add Pet Alert",
-        "noDataState": "alerting",
+        "noDataState": "ok",
         "notifications": []
       },
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
       "dashes": false,
-      "datasource": "${DS_LOCALINFLUX}",
+      "datasource": "LocalInflux",
       "fill": 1,
       "gridPos": {
         "h": 9,
@@ -133,7 +103,7 @@
               "type": "fill"
             }
           ],
-          "hide": false,
+          "hide": true,
           "orderByTime": "ASC",
           "policy": "default",
           "query": "SELECT holt_winters_with_fit(mean(\"diff\"), 1, 1)*2 FROM \"bt_times\" WHERE $timeFilter GROUP BY bt, time(1m), \"bt\" fill(null)",
@@ -172,7 +142,7 @@
               "type": "fill"
             }
           ],
-          "hide": false,
+          "hide": true,
           "measurement": "bt_times",
           "orderByTime": "ASC",
           "policy": "default",
@@ -336,5 +306,5 @@
   "timezone": "",
   "title": "Alerting",
   "uid": "5G3TSVamz",
-  "version": 1
+  "version": 5
 }
