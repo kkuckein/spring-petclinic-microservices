@@ -1,1 +1,0 @@
-start_all_with_inspectIT.bat C:\eclipse_inspectIT\inspectit-master\git\inspectIT\inspectit.agent.java\build\release
