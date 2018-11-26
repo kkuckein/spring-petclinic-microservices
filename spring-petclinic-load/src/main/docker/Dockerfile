@@ -1,5 +1,14 @@
-FROM java:8
-ARG ARTIFACT_NAME
-ADD ${ARTIFACT_NAME}.jar /app.jar
-ADD logback.xml /logback.xml
-ENTRYPOINT ["java","-Dlogback.configurationFile=/logback.xml","-Dgatling.core.simulationClass=org.springframework.samples.petclinic.load.SimpleSimulation","-cp","/app.jar", "io.gatling.app.Gatling"]
+FROM node:8-alpine
+
+VOLUME /artillery
+WORKDIR /artillery
+
+COPY petclinic.yml /artillery/petclinic.yml
+COPY docker-entrypoint.sh /artillery/docker-entrypoint.sh
+
+RUN npm install -g artillery@1.6.0-25 --unsafe-perm=true --allow-root && \
+    apk add --no-cache curl && \
+    chmod +x /artillery/docker-entrypoint.sh
+
+ENTRYPOINT ["/artillery/docker-entrypoint.sh"]
+CMD ["run", "petclinic.yml"]
