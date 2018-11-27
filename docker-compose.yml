@@ -107,7 +107,7 @@ services:
      - 9090:9090
 
   load:
-    image: openapm/spring-petclinic-load:opencensus-showcase
+    image: openapm/spring-petclinic-load:0.1.0
     container_name: load
     depends_on:
      - api-gateway
