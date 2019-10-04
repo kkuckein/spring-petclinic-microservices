@@ -1,19 +1,42 @@
 <!DOCTYPE html>
 
 <html ng-app="petClinicApp" lang="en">
+  <script src="boomerang-1.0.0.min.js"></script>
+  <script src="plugins/rt.min.js"></script>
+  <script src="plugins/memory.min.js"></script>
+  <script src="plugins/clicks.min.js"></script>
+  <script src="plugins/speedindex.js"></script>
+  <script src="plugins/auto-xhr.min.js"></script>
+  <script src="plugins/spa.min.js"></script>
+  <script src="plugins/angular.min.js"></script>
+  <script src="plugins/navtiming.min.js"></script>
+  <script src="plugins/continuity.min.js"></script>
+  <!-- any other plugins you want to include -->
 
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <meta charset="utf-8"/>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=0, minimal-ui"/>
+  <script>
+    BOOMR.init({
+      beacon_url: "http://" + window.location.hostname + ":8087/beacon",
+      beacon_with_credentials: false,
+      beacon_disable_sendbeacon: true,
+      beacon_type: "POST",
+      instrument_xhr: true
+    });
+  </script>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, user-scalable=0, minimal-ui"
+    />
     <!-- The above 4 meta tags *must* come first in the head; any other head content must come *after* these tags -->
 
-    <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.png"/>
+    <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.png" />
 
     <title>PetClinic :: a Spring Framework demonstration</title>
-    <link rel="stylesheet" href="/webjars/bootstrap/css/bootstrap.min.css"/>
-    <link rel="stylesheet" href="/css/petclinic.css"/>
+    <link rel="stylesheet" href="/webjars/bootstrap/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="/css/petclinic.css" />
 
     <script src="/webjars/jquery/jquery.min.js"></script>
     <script src="/webjars/bootstrap/js/bootstrap.min.js"></script>
@@ -46,16 +69,15 @@
     <script src="/scripts/vet-list/vet-list.js"></script>
     <script src="/scripts/vet-list/vet-list.controller.js"></script>
     <script src="/scripts/vet-list/vet-list.component.js"></script>
-</head>
+  </head>
 
-<body class="container">
-<layout-nav></layout-nav>
-<div class="container-fluid">
-    <div class="container xd-container">
+  <body class="container">
+    <layout-nav></layout-nav>
+    <div class="container-fluid">
+      <div class="container xd-container">
         <div ui-view=""></div>
+      </div>
     </div>
-</div>
-<layout-footer></layout-footer>
-</body>
-
+    <layout-footer></layout-footer>
+  </body>
 </html>
