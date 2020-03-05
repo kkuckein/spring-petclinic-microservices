@@ -15,12 +15,12 @@
  */
 package org.springframework.samples.petclinic.api.dto;
 
-import lombok.Value;
+import lombok.Data;
 
 /**
  * @author Maciej Szarlinski
  */
-@Value
+@Data
 public class VisitDetails {
 
     private int id;

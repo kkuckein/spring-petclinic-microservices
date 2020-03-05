@@ -59,4 +59,10 @@ public class VisitsServiceClient {
     private Map<Integer, List<VisitDetails>> emptyVisitsForPets(List<Integer> petIds) {
         return Collections.emptyMap();
     }
+
+
+    public void createVisitForPet(final VisitDetails visit, final int ownerId, final int petId) {
+        UriComponentsBuilder builder = fromHttpUrl("http://visits-service/owners/{ownerId}/pets/{petId}/visits");
+        loadBalancedRestTemplate.postForObject(builder.toUriString(), visit, Void.class);
+    }
 }

@@ -17,6 +17,7 @@ package org.springframework.samples.petclinic.api.application;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.samples.petclinic.api.dto.OwnerDetails;
+import org.springframework.samples.petclinic.api.dto.PetDetails;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
@@ -31,5 +32,9 @@ public class CustomersServiceClient {
 
     public OwnerDetails getOwner(final int ownerId) {
         return loadBalancedRestTemplate.getForObject("http://customers-service/owners/{ownerId}", OwnerDetails.class, ownerId);
+    }
+
+    public PetDetails getPet(final int ownerId, final int petId) {
+        return loadBalancedRestTemplate.getForObject("http://customers-service/owners/{ownerId}/pets/{petId}", PetDetails.class, ownerId, petId);
     }
 }

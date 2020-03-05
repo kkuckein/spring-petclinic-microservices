@@ -15,18 +15,19 @@
  */
 package org.springframework.samples.petclinic.api.boundary.web;
 
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.samples.petclinic.api.application.CustomersServiceClient;
+import org.springframework.samples.petclinic.api.application.VisitsServiceClient;
+import org.springframework.samples.petclinic.api.dto.OwnerDetails;
+import org.springframework.samples.petclinic.api.dto.PetDetails;
+import org.springframework.samples.petclinic.api.dto.VisitDetails;
+import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
-import org.springframework.samples.petclinic.api.application.CustomersServiceClient;
-import org.springframework.samples.petclinic.api.dto.OwnerDetails;
-import org.springframework.samples.petclinic.api.application.VisitsServiceClient;
-import org.springframework.samples.petclinic.api.dto.VisitDetails;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
-
 
 import static java.util.Collections.emptyList;
 
@@ -47,6 +48,17 @@ public class ApiGatewayController {
         supplyVisits(owner, visitsServiceClient.getVisitsForPets(owner.getPetIds()));
         return owner;
     }
+
+    @PostMapping("owners/{ownerId}/pets/{petId}/visits")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    void handleVisitCreation(
+        @Valid @RequestBody VisitDetails visit,
+        @PathVariable("ownerId") int ownerId,
+        @PathVariable("petId") int petId) {
+        PetDetails petDetails = customersServiceClient.getPet(ownerId, petId);
+        visitsServiceClient.createVisitForPet(visit, ownerId, petId);
+    }
+
 
     private void supplyVisits(final OwnerDetails owner, final Map<Integer, List<VisitDetails>> visitsMapping) {
         owner.getPets().forEach(pet ->
